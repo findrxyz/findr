@@ -1,0 +1,70 @@
+name: Update pool data
+
+# Every 15 minutes: run one indexer pass for Ethereum, Base and Robinhood Chain, then publish the page with the
+# fresh data files to Netlify. The indexer's state and last good data files are carried between runs in the
+# Actions cache, so a chain that fails in one run keeps its previous data instead of disappearing from the site.
+#
+# Repository secrets:
+#   ALCHEMY_API_KEY     optional; backup RPC endpoint used only when the free public RPCs fail
+#   NETLIFY_AUTH_TOKEN  Netlify personal access token
+#   NETLIFY_SITE_ID     the Netlify site's ID (Site configuration → Site details)
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+# Runs queue instead of overlapping, since each one continues from the previous run's state.
+concurrency:
+  group: update-pool-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Prepare state folders
+        run: mkdir -p indexer/state data
+
+      - name: Restore indexer state
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            indexer/state
+            data
+          key: indexer-${{ github.run_id }}
+          restore-keys: indexer-
+
+      - name: Index pools
+        env:
+          ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+        run: node --no-warnings indexer/uniswap.mjs --once
+
+      - name: Save indexer state
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            indexer/state
+            data
+          key: indexer-${{ github.run_id }}
+
+      # Only the page and its data are published; the indexer, its state and local tooling stay out.
+      - name: Collect the site
+        run: |
+          mkdir -p site
+          cp index.html app.js styles.css site/
+          cp -r data site/
+
+      - name: Deploy to Netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: npx --yes netlify-cli deploy --prod --dir site --message "Pool data, run ${{ github.run_number }}"
