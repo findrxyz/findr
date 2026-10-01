@@ -11,7 +11,8 @@ name: Update pool data
 
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    # Every 15 minutes, offset from :00/:15/:30/:45: GitHub delays or drops scheduled runs at those busy times.
+    - cron: '7-59/15 * * * *'
   workflow_dispatch:
 
 permissions:
