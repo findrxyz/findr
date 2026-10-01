@@ -1,0 +1,10 @@
+{
+  "name": "yield-sieve",
+  "private": true,
+  "description": "High-APR DEX pools with one-click links to each token's website and X.",
+  "scripts": {
+    "serve": "python3 serve.py",
+    "indexer": "node --no-warnings indexer/uniswap.mjs",
+    "indexer:once": "node --no-warnings indexer/uniswap.mjs --once"
+  }
+}

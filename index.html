@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yield Sieve</title>
+<meta name="description" content="DEX pools on Ethereum, Base and Robinhood Chain, ranked by fee APR, with links to check each token.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='none' stroke='%23b07d00' stroke-width='3'/%3E%3Cg fill='%23b07d00'%3E%3Ccircle cx='11' cy='11' r='1.8'/%3E%3Ccircle cx='16' cy='11' r='1.8'/%3E%3Ccircle cx='21' cy='11' r='1.8'/%3E%3Ccircle cx='11' cy='16' r='1.8'/%3E%3Ccircle cx='16' cy='16' r='1.8'/%3E%3Ccircle cx='21' cy='16' r='1.8'/%3E%3Ccircle cx='11' cy='21' r='1.8'/%3E%3Ccircle cx='16' cy='21' r='1.8'/%3E%3Ccircle cx='21' cy='21' r='1.8'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="styles.css?v=15">
+</head>
+<body>
+<header class="bar">
+  <div class="bar-in">
+    <a class="brand" href="./">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+        <circle cx="16" cy="16" r="13.5" fill="none" stroke="currentColor" stroke-width="2.5"/>
+        <g fill="currentColor">
+          <circle cx="11" cy="11" r="1.7"/><circle cx="16" cy="11" r="1.7"/><circle cx="21" cy="11" r="1.7"/>
+          <circle cx="11" cy="16" r="1.7"/><circle cx="16" cy="16" r="1.7"/><circle cx="21" cy="16" r="1.7"/>
+          <circle cx="11" cy="21" r="1.7"/><circle cx="16" cy="21" r="1.7"/><circle cx="21" cy="21" r="1.7"/>
+        </g>
+      </svg>
+      <span>Yield Sieve</span>
+    </a>
+    <div class="bar-meta">
+      <span id="fresh"></span>
+      <button id="refresh" class="btn btn-quiet" type="button">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="head">
+    <h1>High-APR pools</h1>
+    <p>DEX pools on Ethereum, Base and Robinhood Chain, ranked by fee APR. Most extreme yields come from memecoins, so check each token before you deposit.</p>
+  </div>
+
+  <div class="toolbar" role="toolbar" aria-label="Filters">
+    <label class="search">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.4-4.4"/></svg>
+      <input id="q" type="search" placeholder="Search token or address" autocomplete="off" spellcheck="false" aria-label="Search token or address">
+    </label>
+    <button type="button" class="fbtn" id="f-chain" aria-haspopup="true" aria-expanded="false">
+      <span class="fl">Chain</span><span class="fv" id="v-chain">All</span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <button type="button" class="fbtn" id="f-dex" aria-haspopup="true" aria-expanded="false">
+      <span class="fl">DEX</span><span class="fv" id="v-dex">All</span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <button type="button" class="fbtn" id="f-apr" aria-haspopup="true" aria-expanded="false">
+      <span class="fl">APR</span><span class="fv" id="v-apr">≥ 100%</span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <button type="button" class="fbtn" id="f-tvl" aria-haspopup="true" aria-expanded="false">
+      <span class="fl">TVL</span><span class="fv" id="v-tvl">≥ $25K</span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <button type="button" class="fbtn" id="f-mc" aria-haspopup="true" aria-expanded="false">
+      <span class="fl">Market cap</span><span class="fv" id="v-mc">Any</span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <button type="button" class="fbtn" id="f-more" aria-haspopup="true" aria-expanded="false">
+      <span class="fl">More filters</span><span class="fv" id="v-more"></span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <button type="button" class="fbtn only-narrow" id="f-sort" aria-haspopup="true" aria-expanded="false">
+      <span class="fl">Sort</span><span class="fv" id="v-sort">APR 24h</span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <button type="button" class="reset" id="reset" hidden>Reset filters</button>
+  </div>
+
+  <section class="panel" aria-label="Pools">
+    <div class="panel-head">
+      <div class="count" id="count">Loading pools…</div>
+      <div class="status" id="status" aria-live="polite"></div>
+    </div>
+    <div class="progress" id="progress" hidden><i></i></div>
+    <div class="scroller">
+      <div class="row thead">
+        <div>Token</div>
+        <button type="button" class="sorter" data-sort="apy">APR 24h</button>
+        <button type="button" class="sorter" data-sort="apy30">APR 30d</button>
+        <button type="button" class="sorter" data-sort="tvl">TVL</button>
+        <button type="button" class="sorter" data-sort="vol">Volume 24h</button>
+        <button type="button" class="sorter" data-sort="mc">Market cap</button>
+        <button type="button" class="sorter" data-sort="age">Age</button>
+        <div class="th-links">Links</div>
+      </div>
+      <div id="rows"></div>
+    </div>
+    <div class="more-wrap"><button id="more" class="btn" type="button" hidden>Show more</button></div>
+  </section>
+
+  <details class="about">
+    <summary>How this works</summary>
+    <div class="about-body">
+      <p>APR is what liquidity providers earned in trading fees over the last 24 hours, annualized. Token reward emissions aren't counted, since they make tiny pools look far more profitable than their trading is. Uniswap pools are read directly from each chain: every Uniswap v2, v3 and v4 pool that traded in the last 24 hours, with TVL and volume from DexScreener and fees net of Uniswap's protocol cut, the way Uniswap shows them. They have no 30-day average yet. Other DEXes on Ethereum and Base come from DefiLlama. Market cap, age and links come from DexScreener, with GeckoTerminal filling in missing links. More of the top 20 DeFi chains are coming.</p>
+      <p>APR ignores impermanent loss. If a token falls 90%, the fees won't make up for it.</p>
+      <dl class="flags">
+        <div><dt><span class="tag warn">Spike ×6</span></dt><dd>The last 24 hours earned 6× the 30-day average. The APR probably won't last.</dd></div>
+        <div><dt><span class="tag bad">New · 2d</span></dt><dd>The token's main pool is under two weeks old. Red means under three days.</dd></div>
+        <div><dt><span class="tag warn">High fee</span></dt><dd>The pool charges 2% or more per swap, so a few trades inflate the APR.</dd></div>
+        <div><dt><span class="tag bad">Two USDCs</span></dt><dd>Both tokens in the pool share a name, so at least one is a copy.</dd></div>
+        <div><dt><span class="tag bad">Unofficial USDC</span></dt><dd>The token uses a major token's name but isn't its official contract on this chain.</dd></div>
+        <div><dt><span class="tag">Major pair</span></dt><dd>Both sides are major tokens, so a very high APR is unusual.</dd></div>
+        <div><dt><span class="tag warn">No website or X</span></dt><dd>Neither DexScreener nor GeckoTerminal lists a website or X account.</dd></div>
+      </dl>
+    </div>
+  </details>
+
+  <footer>Data from DefiLlama, GeckoTerminal and DexScreener. Nothing here is financial advice.</footer>
+</main>
+
+<div class="pop" id="pop" hidden></div>
+<script src="app.js?v=15"></script>
+</body>
+</html>
