@@ -58,8 +58,8 @@ function chainCfg(name) {
 const ENABLED = new Set(['Ethereum', 'Base', 'Robinhood Chain']);
 const isSoon = (name) => !ENABLED.has(name);
 const NO_DEX_POOLS = new Set(['Bitcoin']); // top-20 chains with no AMM pools to list
-const INDEX_POLL = 2 * 60e3;
-const INDEX_STALE = 20 * 60e3;
+const INDEX_POLL = 5 * 60e3;       // deployed data changes every 15–30 minutes
+const INDEX_STALE = 60 * 60e3;
 
 // DefiLlama projects that hold two-token positions but aren't DEX pools (vaults, perps, lending wrappers).
 const NON_DEX = new Set([
@@ -425,10 +425,15 @@ async function loadIndexed() {
     const file = chainCfg(chain).index;
     if (!file) return;
     try {
-      const r = await fetch(file + '?t=' + Date.now(), { cache: 'no-store' });
+      // 'no-cache' revalidates with the server, so an unchanged file costs a tiny 304 instead of megabytes,
+      // and a file whose ETag hasn't changed isn't parsed again.
+      const r = await fetch(file, { cache: 'no-cache' });
       if (!r.ok) throw new Error(String(r.status));
-      const json = await r.json();
-      indexedByChain[chain] = { pools: (json.pools || []).map((p) => fromIndexed(chain, p)).filter(Boolean), updatedAt: json.updatedAt || 0 };
+      const tag = r.headers.get('etag') || r.headers.get('last-modified');
+      if (!tag || indexedByChain[chain]?.tag !== tag) {
+        const json = await r.json();
+        indexedByChain[chain] = { pools: (json.pools || []).map((p) => fromIndexed(chain, p)).filter(Boolean), updatedAt: json.updatedAt || 0, tag };
+      }
     } catch {
       if (!indexedByChain[chain]) notes.push(`${chain} Uniswap pools aren't available right now`);
       return;
@@ -1049,7 +1054,8 @@ function rowEl(p) {
   const name = rawName && rawName.toLowerCase() !== sym.toLowerCase() ? rawName : '';
   const pair = p.syms[0] && p.syms[1] ? p.syms.join(' / ') : p.symbol;
   const meta = [pair, p.fee != null ? fmtFee(p.fee) : null, p.dexName, p.chain].filter(Boolean).join(' · ');
-  const img = d?.img || g?.img || p.imgs?.[i];
+  // https only: a plain-http logo would load insecurely and leak visitors' IPs over an unencrypted connection.
+  const img = [d?.img, g?.img, p.imgs?.[i]].find((u) => u && u.startsWith('https:'));
   let logo = letterLogo(sym);
   if (img) {
     logo = h('img', { class: 'logo', src: img, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' });

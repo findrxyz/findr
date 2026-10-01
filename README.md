@@ -20,20 +20,24 @@ npm run indexer    # writes data/<chain>.json every few minutes
 No keys are needed: the indexer uses free public RPCs. The first pass looks back 24 hours on Ethereum and Base, so
 it takes several minutes.
 
-## Deploy (GitHub Actions → Netlify)
+## Deploy (GitHub Actions → GitHub Pages)
 
-`.github/workflows/update-data.yml` runs one indexer pass every 15 minutes and deploys the page with fresh data to
-Netlify. Netlify doesn't build anything itself.
+`.github/workflows/update-data.yml` runs one indexer pass every 15 minutes and publishes the page with fresh data to
+GitHub Pages. Deploys use the short-lived token GitHub gives each run, scoped to this repo, so no deploy secret is
+stored. The site is at `https://<owner>.github.io/findr/`.
 
-1. Create a Netlify site that isn't linked to this repo (for example, deploy the folder once by hand). If it's linked,
-   Netlify's own builds would publish the page without data. Copy its **Site ID** from Site configuration → Site
-   details.
-2. Create a Netlify personal access token under User settings → Applications.
-3. Add repository secrets (Settings → Secrets and variables → Actions):
-   - `NETLIFY_AUTH_TOKEN`: the token
-   - `NETLIFY_SITE_ID`: the site ID
-   - `ALCHEMY_API_KEY` (optional): used only as a backup when the public RPCs fail
-4. Run the workflow once from the Actions tab. The first run takes about 20 minutes; later runs take a few.
+1. Settings → Pages → Build and deployment → Source: **GitHub Actions**.
+2. Optional: add an `ALCHEMY_API_KEY` repository secret (Settings → Secrets and variables → Actions). It's used only
+   as a backup when the public RPCs fail.
+3. Run **Update pool data** once from the Actions tab. The first run takes about 20 minutes; later runs take a few.
 
 GitHub pauses scheduled workflows in public repos after 60 days without repository activity; re-enable it from the
 Actions tab if that happens.
+
+## Security notes
+
+- Token names, logos and links come from token creators. The page inserts them as text, allows only http(s) links
+  and https logos, and a Content-Security-Policy limits scripts to the site itself.
+- Workflow actions are pinned to commit SHAs. The workflow runs only on a schedule or manually, never on pull
+  requests, so forks can't reach its secrets.
+- The page re-checks data with conditional requests, so an unchanged file costs a few hundred bytes, not megabytes.
