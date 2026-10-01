@@ -19,6 +19,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  actions: write # lets a run queue the next one (see the last step)
 
 # Runs queue instead of overlapping, since each one continues from the previous run's state.
 concurrency:
@@ -33,6 +34,9 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Note the start time
+        run: echo "RUN_STARTED=$(date +%s)" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -81,3 +85,16 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+      # GitHub's scheduler hasn't started this workflow on its own, so each run also queues the next one about
+      # 15 minutes after it started. A workflow_dispatch made with the run's own token is one of the few events
+      # GitHub lets start another run. The concurrency group keeps at most one run waiting, so this and the
+      # schedule can't pile up. Cancelling a run stops the chain; a manual or scheduled run restarts it.
+      - name: Queue the next run
+        if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          wait=$(( RUN_STARTED + 15 * 60 - $(date +%s) ))
+          if [ "$wait" -gt 0 ]; then sleep "$wait"; fi
+          gh workflow run update-data.yml --repo "$GITHUB_REPOSITORY" --ref main
