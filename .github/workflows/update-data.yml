@@ -1,18 +1,23 @@
 name: Update pool data
 
 # Every 15 minutes: run one indexer pass for Ethereum, Base and Robinhood Chain, then publish the page with the
-# fresh data files to Netlify. The indexer's state and last good data files are carried between runs in the
+# fresh data files to GitHub Pages. The indexer's state and last good data files are carried between runs in the
 # Actions cache, so a chain that fails in one run keeps its previous data instead of disappearing from the site.
 #
-# Repository secrets:
-#   ALCHEMY_API_KEY     optional; backup RPC endpoint used only when the free public RPCs fail
-#   NETLIFY_AUTH_TOKEN  Netlify personal access token
-#   NETLIFY_SITE_ID     the Netlify site's ID (Site configuration → Site details)
+# Deploys use the short-lived token GitHub issues to each run, scoped to this repo; no deploy secret is stored.
+# Repository secret (optional): ALCHEMY_API_KEY, a backup RPC endpoint used only when the free public RPCs fail.
+#
+# Actions are pinned to commit SHAs so a moved or hijacked tag can't change what runs.
 
 on:
   schedule:
     - cron: '*/15 * * * *'
   workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
 # Runs queue instead of overlapping, since each one continues from the previous run's state.
 concurrency:
@@ -23,10 +28,13 @@ jobs:
   update:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 20
 
@@ -34,7 +42,7 @@ jobs:
         run: mkdir -p indexer/state data
 
       - name: Restore indexer state
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             indexer/state
@@ -49,7 +57,7 @@ jobs:
 
       - name: Save indexer state
         if: always()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             indexer/state
@@ -63,8 +71,12 @@ jobs:
           cp index.html app.js styles.css site/
           cp -r data site/
 
-      - name: Deploy to Netlify
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-        run: npx --yes netlify-cli deploy --prod --dir site --message "Pool data, run ${{ github.run_number }}"
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

@@ -103,10 +103,13 @@ const hex = (n) => '0x' + n.toString(16);
 
 // ---------- RPC ----------
 
-// Errors worth retrying, possibly on another endpoint, as opposed to errors about the request itself.
-const TRANSIENT = /rate limit|over rate|too many requests|can't route|cannot route|timed? ?out|unavailable|busy|capacity|beyond current head|header not found|internal error|try again|specify an address/i;
+// Errors worth retrying, possibly on another endpoint. Used for individual calls inside a batch.
+const TRANSIENT = /rate limit|over rate|too many requests|can't route|cannot route|timed? ?out|unavailable|busy|capacity|beyond current head|header not found|internal error|try again|specify an address|unknown state/i;
 // eth_getLogs refusals that mean "ask for a smaller block range".
-const TOO_BIG = /more than \d+ results|too many results|block range|range (is )?too (large|big)|exceed(s|ed)? (the )?max|response (size|too large)|query returned more than/i;
+const TOO_BIG = /more than \d+ results|too many results|block range|range (is )?too (large|big)|exceeds? (the )?(max|limit)|limit of \d+|response (size|too large)|query returned more than/i;
+// Errors about the request itself, which another endpoint would refuse too. Anything else (a pruned node, a
+// provider-specific refusal, an outage) is tried on the next endpoint.
+const BAD_REQUEST = /revert|invalid (argument|params|opcode|address)|method not found|unsupported method/i;
 
 // One client per chain. Temporary failures rotate to the next endpoint in the list.
 function rpcClient(urls) {
@@ -135,7 +138,7 @@ function rpcClient(urls) {
         if (!j.error) return j.result;
         const msg = j.error.message || '';
         lastError = new Error(`${method}: ${msg}`);
-        if (TOO_BIG.test(msg) || !TRANSIENT.test(msg)) throw Object.assign(lastError, { final: true });
+        if (TOO_BIG.test(msg) || BAD_REQUEST.test(msg)) throw Object.assign(lastError, { final: true });
       } catch (e) {
         if (e.final) throw e;
         lastError = e;
