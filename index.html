@@ -7,27 +7,19 @@
      come from token creators, so this backs up the page's escaping if a future change ever slips. -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data:; connect-src 'self' https://yields.llama.fi https://api.llama.fi https://api.dexscreener.com https://api.geckoterminal.com; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<title>Yield Sieve</title>
-<meta name="description" content="DEX pools on Ethereum, Base and Robinhood Chain, ranked by fee APR, with links to check each token.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='none' stroke='%23b07d00' stroke-width='3'/%3E%3Cg fill='%23b07d00'%3E%3Ccircle cx='11' cy='11' r='1.8'/%3E%3Ccircle cx='16' cy='11' r='1.8'/%3E%3Ccircle cx='21' cy='11' r='1.8'/%3E%3Ccircle cx='11' cy='16' r='1.8'/%3E%3Ccircle cx='16' cy='16' r='1.8'/%3E%3Ccircle cx='21' cy='16' r='1.8'/%3E%3Ccircle cx='11' cy='21' r='1.8'/%3E%3Ccircle cx='16' cy='21' r='1.8'/%3E%3Ccircle cx='21' cy='21' r='1.8'/%3E%3C/g%3E%3C/svg%3E">
+<title>findr</title>
+<meta name="description" content="Discover tokens early: pools on Ethereum, Base and Robinhood Chain trading far beyond their size, with links to check each token.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23101318'/%3E%3Ctext x='16' y='23.5' font-family='Helvetica,Arial,sans-serif' font-size='22' font-weight='700' text-anchor='middle' fill='%23ffffff'%3Ef%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="styles.css?v=16">
+<link rel="stylesheet" href="styles.css?v=18">
 </head>
 <body>
 <header class="bar">
   <div class="bar-in">
     <a class="brand" href="./">
-      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
-        <circle cx="16" cy="16" r="13.5" fill="none" stroke="currentColor" stroke-width="2.5"/>
-        <g fill="currentColor">
-          <circle cx="11" cy="11" r="1.7"/><circle cx="16" cy="11" r="1.7"/><circle cx="21" cy="11" r="1.7"/>
-          <circle cx="11" cy="16" r="1.7"/><circle cx="16" cy="16" r="1.7"/><circle cx="21" cy="16" r="1.7"/>
-          <circle cx="11" cy="21" r="1.7"/><circle cx="16" cy="21" r="1.7"/><circle cx="21" cy="21" r="1.7"/>
-        </g>
-      </svg>
-      <span>Yield Sieve</span>
+      <span>findr</span>
     </a>
     <div class="bar-meta">
       <span id="fresh"></span>
@@ -41,8 +33,8 @@
 
 <main class="wrap">
   <div class="head">
-    <h1>High-APR pools</h1>
-    <p>DEX pools on Ethereum, Base and Robinhood Chain, ranked by fee APR. Most extreme yields come from memecoins, so check each token before you deposit.</p>
+    <h1>Discover tokens early</h1>
+    <p>Tokens on Ethereum, Base and Robinhood Chain whose pools are trading far beyond their size, often the first sign one is catching on. Most still go to zero, so check the website and X before you buy.</p>
   </div>
 
   <div class="toolbar" role="toolbar" aria-label="Filters">
@@ -106,10 +98,11 @@
   <details class="about">
     <summary>How this works</summary>
     <div class="about-body">
-      <p>APR is what liquidity providers earned in trading fees over the last 24 hours, annualized. Token reward emissions aren't counted, since they make tiny pools look far more profitable than their trading is. Uniswap pools are read directly from each chain: every Uniswap v2, v3 and v4 pool that traded in the last 24 hours, with TVL and volume from DexScreener and fees net of Uniswap's protocol cut, the way Uniswap shows them. They have no 30-day average yet. Other DEXes on Ethereum and Base come from DefiLlama. Market cap, age and links come from DexScreener, with GeckoTerminal filling in missing links. More of the top 20 DeFi chains are coming.</p>
-      <p>APR ignores impermanent loss. If a token falls 90%, the fees won't make up for it.</p>
+      <p>findr ranks pools by fee APR: the trading fees a pool earned in the last 24 hours, annualized against its liquidity. A high APR on a small pool means heavy trading relative to its size, which is often the earliest public sign that a token is getting attention, before it shows up on X or the big trackers. Token reward emissions aren't counted, since they say nothing about trading.</p>
+      <p>Uniswap pools are read directly from each chain: every Uniswap v2, v3 and v4 pool that traded in the last 24 hours, with TVL and volume from DexScreener and fees net of Uniswap's protocol cut, as Uniswap shows them. Other DEXes on Ethereum and Base come from DefiLlama. Market cap, age and links come from DexScreener, with GeckoTerminal filling in missing links. More of the top 20 DeFi chains are coming.</p>
+      <p>Heavy trading isn't the same as a good token. Volume can be faked, names can be copied, and links come from token creators. The flags below catch some of the usual traps; the rest is up to you.</p>
       <dl class="flags">
-        <div><dt><span class="tag warn">Spike ×6</span></dt><dd>The last 24 hours earned 6× the 30-day average. The APR probably won't last.</dd></div>
+        <div><dt><span class="tag warn">Spike ×6</span></dt><dd>Trading in the last 24 hours ran at 6× the 30-day average: a sudden burst that may not last.</dd></div>
         <div><dt><span class="tag bad">New · 2d</span></dt><dd>The token's main pool is under two weeks old. Red means under three days.</dd></div>
         <div><dt><span class="tag warn">High fee</span></dt><dd>The pool charges 2% or more per swap, so a few trades inflate the APR.</dd></div>
         <div><dt><span class="tag bad">Two USDCs</span></dt><dd>Both tokens in the pool share a name, so at least one is a copy.</dd></div>
@@ -120,10 +113,10 @@
     </div>
   </details>
 
-  <footer>Data from DefiLlama, GeckoTerminal and DexScreener. Nothing here is financial advice.</footer>
+  <footer>Data from Uniswap (on-chain), DexScreener, DefiLlama and GeckoTerminal. Nothing here is financial advice.</footer>
 </main>
 
 <div class="pop" id="pop" hidden></div>
-<script src="app.js?v=16"></script>
+<script src="app.js?v=18"></script>
 </body>
 </html>

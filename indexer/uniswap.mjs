@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Uniswap pool indexer for Yield Sieve.
+// Uniswap pool indexer for findr.
 //
 // For each chain below it finds the Uniswap v2, v3 and v4 pools that traded in the last 24 hours by reading swap
 // events straight from the chain, looks up each pool's TVL, volume, market cap and links on DexScreener, reads
@@ -10,7 +10,7 @@
 //   node indexer/uniswap.mjs --once              one pass, then exit
 //   node indexer/uniswap.mjs --chain base        only the named chain(s); repeat the flag for more
 //
-// Uses free public RPCs (no keys, rate-limited). With ALCHEMY_API_KEY set in yield-sieve/.env (git-ignored), Alchemy
+// Uses free public RPCs (no keys, rate-limited). With ALCHEMY_API_KEY set in the repo's .env (git-ignored), Alchemy
 // becomes each chain's last-resort endpoint, so its free tier is only spent when the public RPCs fail. RPC_ETHEREUM,
 // RPC_BASE or RPC_ROBINHOOD put your own endpoint first.
 
@@ -33,7 +33,7 @@ function loadEnv() {
 }
 loadEnv();
 const DS_PAIRS = 'https://api.dexscreener.com/latest/dex/pairs/';
-const UA = 'yield-sieve-indexer/1.0';
+const UA = 'findr-indexer/1.0';
 
 // Contract addresses are from Uniswap's deployment docs, except Robinhood's v2 factory, which was read from the
 // factory() of a known Uniswap v2 pool there.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Local server for Yield Sieve.
+"""Local server for findr.
 
 Same as `python3 -m http.server`, but it tells the browser to check for a newer copy of every file on each
 load. Without that, Chrome keeps reusing its cached page for a while, so code edits and fresh indexer data
@@ -29,5 +29,5 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
 
 if __name__ == "__main__":
     handler = functools.partial(NoCacheHandler, directory=ROOT)
-    print(f"Yield Sieve on http://127.0.0.1:{PORT}")
+    print(f"findr on http://127.0.0.1:{PORT}")
     http.server.ThreadingHTTPServer(("127.0.0.1", PORT), handler).serve_forever()
