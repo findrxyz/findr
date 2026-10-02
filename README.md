@@ -73,3 +73,7 @@ Deploys use the short-lived token GitHub gives each run, so no deploy secret is 
 
 Found a security problem? Please report it privately through the repository's **Security** tab rather than opening a
 public issue.
+
+## License
+
+[MIT](LICENSE)
