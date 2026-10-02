@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<!-- Only this site's own scripts run; data can only be fetched from the APIs the page uses. Token names and links
+<!-- Only this site's own scripts and GoatCounter's pinned visit counter run; data can only be fetched from the APIs the page uses. Token names and links
      come from token creators, so this backs up the page's escaping if a future change ever slips. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data:; connect-src 'self' https://yields.llama.fi https://api.llama.fi https://api.dexscreener.com https://api.geckoterminal.com; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://gc.zgo.at; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data:; connect-src 'self' https://yields.llama.fi https://api.llama.fi https://api.dexscreener.com https://api.geckoterminal.com https://prayag.goatcounter.com; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <title>findr</title>
 <meta name="description" content="Discover tokens early: pools on Ethereum, Base and Robinhood Chain trading far beyond their size, with links to check each token.">
@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="styles.css?v=18">
+<link rel="stylesheet" href="styles.css?v=19">
 </head>
 <body>
 <header class="bar">
@@ -113,10 +113,12 @@
     </div>
   </details>
 
-  <footer>Data from Uniswap (on-chain), DexScreener, DefiLlama and GeckoTerminal. Nothing here is financial advice.</footer>
+  <footer>Data from Uniswap (on-chain), DexScreener, DefiLlama and GeckoTerminal. Visits are counted with GoatCounter, without cookies. Nothing here is financial advice.</footer>
 </main>
 
 <div class="pop" id="pop" hidden></div>
-<script src="app.js?v=18"></script>
+<!-- Visit counter. Pinned to a fixed GoatCounter version by hash, so a changed file won't run. -->
+<script data-goatcounter="https://prayag.goatcounter.com/count" async src="https://gc.zgo.at/count.v5.js" crossorigin="anonymous" integrity="sha384-atnOLvQb9t+jTSipvd75X2yginT4PjVbqDdlJAmxMm+wYElFmeR6EmLP5bYeoRVQ"></script>
+<script src="app.js?v=19"></script>
 </body>
 </html>
