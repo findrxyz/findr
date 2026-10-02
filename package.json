@@ -1,7 +1,7 @@
 {
-  "name": "yield-sieve",
+  "name": "findr",
   "private": true,
-  "description": "High-APR DEX pools with one-click links to each token's website and X.",
+  "description": "Discover tokens early: pools trading far beyond their size, with links to check each token.",
   "scripts": {
     "serve": "python3 serve.py",
     "indexer": "node --no-warnings indexer/uniswap.mjs",
