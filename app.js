@@ -4,6 +4,9 @@ const LLAMA_POOLS = 'https://yields.llama.fi/pools';
 const LLAMA_CHAINS = 'https://api.llama.fi/v2/chains';
 const DS_TOKENS = 'https://api.dexscreener.com/tokens/v1/';
 const GT_NETWORKS = 'https://api.geckoterminal.com/api/v2/networks/';
+// Web app URL of the Google Apps Script in reports/Code.gs, which saves problem reports to a Google Sheet.
+// Left empty, the Report button stays hidden, which suits a copy of the page with no sheet of its own.
+const REPORT_URL = 'https://script.google.com/macros/s/AKfycbyV6jI8uDcEuqt1C1iaxOzCJqYCxvA0KXEcFaUTExdAvIfi4nBv5ZCx3LDh056MNFIdug/exec';
 const ZERO = '0x0000000000000000000000000000000000000000';
 const DAY = 864e5;
 const POOLS_TTL = 15 * 60e3;
@@ -194,6 +197,7 @@ const ICONS = {
   history: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
   cube: '<path d="m12 3.5 7.5 4.25v8.5L12 20.5l-7.5-4.25v-8.5L12 3.5z"/><path d="m4.5 7.75 7.5 4.25 7.5-4.25M12 12v8.5"/>',
   copy: '<rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 8.5V6.5a2 2 0 0 0-2-2h-7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2"/>',
+  flag: '<path d="M5.5 20.5v-16"/><path d="M5.5 5h12l-2.5 4 2.5 4h-12"/>',
 };
 function icon(name) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -926,6 +930,10 @@ function menuRow(p, i) {
       setTimeout(closePop, 700);
     } }, h('span', { class: 'opt-icon' }, icon('copy')), label));
   }
+  if (REPORT_URL) {
+    items.push(h('div', { class: 'sep' }), h('button', { type: 'button', class: 'opt', onclick: () => openReport(p, i) },
+      h('span', { class: 'opt-icon' }, icon('flag')), h('span', { class: 'opt-label', text: 'Report a problem' })));
+  }
   return h('div', { class: 'list' }, items);
 }
 
@@ -1158,6 +1166,109 @@ function scheduleRun() {
   runTimer = setTimeout(run, 300);
 }
 
+// ---------- problem reports ----------
+
+const reportDlg = $('#report');
+let reportPool = null; // [pool, token index] when the report was opened from a row's menu
+
+// What the page was showing, so a report can be acted on without a round of questions.
+function reportContext() {
+  const lines = ['Page: ' + location.href];
+  if (reportPool) {
+    const [p, i] = reportPool;
+    lines.push(
+      `Pool: ${p.symbol} · ${p.dexName} on ${p.chain} (${p.src === 'indexer' ? 'indexer' : 'DefiLlama'})`,
+      'Pool id: ' + (p.pool || p.id),
+      'Token: ' + p.tokens[i],
+      `Shown: APR 24h ${fmtPct(p.apy)}, APR 30d ${fmtPct(p.apy30)}, TVL ${fmtUsd(p.tvl)}, volume ${fmtUsd(p.vol1d)}, market cap ${fmtUsd(mcOf(p, i))}, fee ${p.fee != null ? fmtFee(p.fee) : 'unknown'}`);
+  }
+  lines.push(
+    'Filters: ' + JSON.stringify({ ...F, dexOff: [...DEX_OFF] }),
+    'Showing: ' + $('#count').textContent,
+    'Status: ' + ($('#status').textContent || 'none'));
+  for (const [chain, c] of Object.entries(indexedByChain)) {
+    lines.push(`${chain}: ${fmtInt(c.pools.length)} pools, updated ${c.updatedAt ? new Date(c.updatedAt).toISOString() : 'never'}`);
+  }
+  lines.push(
+    'DefiLlama: ' + (llamaAt ? `${fmtInt(LLAMA.length)} pools, loaded ${new Date(llamaAt).toISOString()}` : 'not loaded'),
+    'Sent: ' + new Date().toISOString(),
+    `Window: ${window.innerWidth}×${window.innerHeight}`,
+    'Browser: ' + navigator.userAgent);
+  return lines.join('\n');
+}
+
+function reportError(text) {
+  const el = $('#report-error');
+  el.textContent = text || '';
+  el.hidden = !text;
+}
+
+function openReport(p, i) {
+  closePop();
+  reportPool = p ? [p, i] : null;
+  const about = $('#report-about');
+  about.hidden = !p;
+  if (p) about.textContent = 'About ' + [symOf(p, i) || shortAddr(p.tokens[i]), p.dexName, p.chain].join(' · ');
+  $('#report-form').hidden = false;
+  $('#report-done').hidden = true;
+  reportError('');
+  reportDlg.showModal();
+  $('#report-text').focus();
+}
+
+async function sendReport() {
+  const text = $('#report-text');
+  const email = $('#report-email');
+  const send = $('#report-send');
+  if (!text.value.trim()) { reportError('Describe the problem before sending.'); text.focus(); return; }
+  if (email.value.trim() && !email.checkValidity()) { reportError("That email address doesn't look right."); email.focus(); return; }
+  reportError('');
+  send.disabled = true;
+  send.textContent = 'Sending…';
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 20e3);
+  try {
+    const pool = reportPool ? [reportPool[0].symbol, reportPool[0].dexName, reportPool[0].chain].join(' · ') : '';
+    const r = await fetch(REPORT_URL, {
+      method: 'POST',
+      // JSON sent as plain text: a JSON content type makes the browser ask permission first, with a request
+      // Apps Script can't answer.
+      headers: { 'content-type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ message: text.value, email: email.value.trim(), pool, context: reportContext(), website: $('#report-website').value }),
+      signal: ctl.signal,
+    });
+    const j = await r.json().catch(() => null);
+    // Apps Script answers 200 either way. The script's own refusals (too many reports, a bad address) say what
+    // to do; anything else is a failure to send.
+    if (!j?.ok) throw new Error(j?.error || '');
+    text.value = '';
+    $('#report-form').hidden = true;
+    $('#report-done').hidden = false;
+    $('#report-ok').focus();
+  } catch (e) {
+    reportError(e.name !== 'AbortError' && e.name !== 'TypeError' && e.message
+      ? e.message : "The report couldn't be sent. Check your connection and try again.");
+  } finally {
+    clearTimeout(timer);
+    send.disabled = false;
+    send.textContent = 'Send report';
+  }
+}
+
+function bindReport() {
+  if (!REPORT_URL) return;
+  const open = $('#report-open');
+  open.hidden = false;
+  open.addEventListener('click', () => openReport());
+  $('#report-form').addEventListener('submit', (e) => { e.preventDefault(); sendReport(); });
+  for (const id of ['#report-cancel', '#report-ok']) $(id).addEventListener('click', () => reportDlg.close());
+  // A click on the dimmed area around the dialog closes it. What was typed stays for next time.
+  reportDlg.addEventListener('mousedown', (e) => {
+    const r = reportDlg.getBoundingClientRect();
+    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) reportDlg.close();
+  });
+}
+
 // ---------- controls ----------
 
 let saveTimer;
@@ -1222,6 +1333,7 @@ async function start(force) {
 }
 
 bindControls();
+bindReport();
 updateButtons();
 start(false);
 // The indexer rewrites its file every few minutes; pick up new Robinhood numbers without a reload.

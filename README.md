@@ -52,6 +52,8 @@ as a backup endpoint.
    public RPCs fail.
 4. Actions → **Update pool data** → Run workflow. The first run takes about 20 minutes; after that each run queues
    the next one about 15 minutes later. Cancel a run to stop the chain; the cron schedule is a backup.
+5. The **Report a problem** button adds a row to the original site's Google Sheet. Empty `REPORT_URL` in `app.js`
+   to hide the button, or point it at a sheet of your own: the steps are at the top of `reports/Code.gs`.
 
 Deploys use the short-lived token GitHub gives each run, so no deploy secret is needed.
 
@@ -62,6 +64,7 @@ Deploys use the short-lived token GitHub gives each run, so no deploy secret is 
 | `index.html`, `app.js`, `styles.css` | The page. Plain HTML, CSS and JavaScript, no build step. |
 | `indexer/uniswap.mjs` | The indexer. Node, no dependencies. |
 | `.github/workflows/update-data.yml` | Runs the indexer and deploys to GitHub Pages. |
+| `reports/Code.gs` | Google Apps Script that saves problem reports to a Google Sheet. Pasted into the sheet by hand. |
 | `serve.py` | Local server that disables caching and refuses `.env` and `indexer/`. |
 
 ## Security
@@ -79,6 +82,10 @@ public issue.
 The page counts visits with [GoatCounter](https://www.goatcounter.com), without cookies or personal data. Your browser
 also loads data directly from DefiLlama, DexScreener and GeckoTerminal, fonts from Google Fonts, and token logos from
 their hosts. There are no accounts and no wallet connection.
+
+A problem report is sent only when you press Send. It is saved to a private Google Sheet through Google Apps Script:
+your message, your email address if you give one, and what the page was showing (your filters, how fresh the data
+was, your browser version and window size).
 
 ## License
 
