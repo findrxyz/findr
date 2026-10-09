@@ -4,8 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!-- Only this site's own scripts and GoatCounter's pinned visit counter run; data can only be fetched from the APIs the page uses. Token names and links
-     come from token creators, so this backs up the page's escaping if a future change ever slips. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://gc.zgo.at; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data:; connect-src 'self' https://yields.llama.fi https://api.llama.fi https://api.dexscreener.com https://api.geckoterminal.com https://prayag.goatcounter.com; object-src 'none'; base-uri 'none'; form-action 'none'">
+     come from token creators, so this backs up the page's escaping if a future change ever slips. The two Google script hosts receive problem reports:
+     the form posts to script.google.com, which answers from script.googleusercontent.com. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://gc.zgo.at; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data:; connect-src 'self' https://yields.llama.fi https://api.llama.fi https://api.dexscreener.com https://api.geckoterminal.com https://prayag.goatcounter.com https://script.google.com https://script.googleusercontent.com; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <title>findr</title>
 <meta name="description" content="Discover tokens early: pools on Ethereum, Base and Robinhood Chain trading far beyond their size, with links to check each token.">
@@ -13,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="styles.css?v=19">
+<link rel="stylesheet" href="styles.css?v=20">
 </head>
 <body>
 <header class="bar">
@@ -26,6 +27,10 @@
       <button id="refresh" class="btn btn-quiet" type="button">
         <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
         Refresh
+      </button>
+      <button id="report-open" class="btn btn-quiet" type="button" hidden>
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 20.5v-16"/><path d="M5.5 5h12l-2.5 4 2.5 4h-12"/></svg>
+        Report a problem
       </button>
     </div>
   </div>
@@ -116,9 +121,40 @@
   <footer>Data from Uniswap (on-chain), DexScreener, DefiLlama and GeckoTerminal. Visits are counted with GoatCounter, without cookies. Nothing here is financial advice.</footer>
 </main>
 
+<dialog class="dlg" id="report" aria-labelledby="report-title">
+  <form id="report-form" novalidate>
+    <h2 id="report-title">Report a problem</h2>
+    <p class="dlg-lead">Wrong numbers, a broken link, a scam that slipped through, or anything else that looks off.</p>
+    <p class="dlg-about" id="report-about" hidden></p>
+    <label class="field">
+      <span class="field-label">What's wrong?</span>
+      <textarea id="report-text" name="message" rows="5" maxlength="2000" required></textarea>
+    </label>
+    <label class="field">
+      <span class="field-label">Your email <span class="field-hint">Optional, only used to reply</span></span>
+      <input id="report-email" name="email" type="email" maxlength="254" autocomplete="email" spellcheck="false">
+    </label>
+    <!-- Not for people: hidden by the stylesheet, and a report that fills it in is dropped as spam. -->
+    <label class="field-trap" aria-hidden="true">Website <input id="report-website" name="website" type="text" tabindex="-1" autocomplete="off"></label>
+    <p class="dlg-note">Sent with your report: the filters you've set, how fresh the data is, and your browser version and window size.</p>
+    <p class="dlg-error" id="report-error" role="alert" hidden></p>
+    <div class="dlg-actions">
+      <button type="button" class="btn" id="report-cancel">Cancel</button>
+      <button type="submit" class="btn btn-primary" id="report-send">Send report</button>
+    </div>
+  </form>
+  <div id="report-done" hidden>
+    <h2>Report sent</h2>
+    <p class="dlg-lead">Thanks for flagging it.</p>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-primary" id="report-ok">Done</button>
+    </div>
+  </div>
+</dialog>
+
 <div class="pop" id="pop" hidden></div>
 <!-- Visit counter. Pinned to a fixed GoatCounter version by hash, so a changed file won't run. -->
 <script data-goatcounter="https://prayag.goatcounter.com/count" async src="https://gc.zgo.at/count.v5.js" crossorigin="anonymous" integrity="sha384-atnOLvQb9t+jTSipvd75X2yginT4PjVbqDdlJAmxMm+wYElFmeR6EmLP5bYeoRVQ"></script>
-<script src="app.js?v=19"></script>
+<script src="app.js?v=20"></script>
 </body>
 </html>
