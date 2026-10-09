@@ -1,0 +1,38 @@
+name: Clear stuck runs
+
+# "Update pool data" runs one at a time, so a run that never starts holds up every run after it. On 6 October 2026
+# one sat "waiting" on the github-pages environment for three days, although that environment has no reviewers
+# or wait timer to wait for, and each later run queued behind it and was cancelled by the next. The page went
+# stale until the run was cancelled by hand.
+#
+# This checks once an hour for an update run that has been waiting far longer than the second or two the
+# environment check normally takes, cancels it, and starts a fresh run. If required reviewers are ever added to
+# the github-pages environment, raise the limit below or runs awaiting approval will be cancelled too.
+
+on:
+  schedule:
+    # GitHub starts scheduled runs late in this repository, sometimes by hours, so this is a floor, not a promise.
+    - cron: '23 * * * *'
+  workflow_dispatch:
+
+permissions:
+  actions: write # cancel the stuck run and start the next one
+
+jobs:
+  clear:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Cancel update runs stuck waiting, then start a fresh one
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cutoff=$(date -u -d '30 minutes ago' +%Y-%m-%dT%H:%M:%SZ)
+          stuck=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/update-data.yml/runs?status=waiting&per_page=20" \
+            --jq ".workflow_runs[] | select(.created_at < \"$cutoff\") | .id")
+          if [ -z "$stuck" ]; then echo "No stuck runs."; exit 0; fi
+          for id in $stuck; do
+            echo "Cancelling run $id, waiting since before $cutoff"
+            gh run cancel "$id" --repo "$GITHUB_REPOSITORY"
+          done
+          gh workflow run update-data.yml --repo "$GITHUB_REPOSITORY" --ref main
