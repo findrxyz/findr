@@ -96,6 +96,10 @@ const DS_MAX_CALLS = 150;             // per chain per cycle; DexScreener allows
 const LP_FEE_TTL = 30 * 60e3;         // how long a v4 pool's LP fee is trusted before it's read again
 const STATE_VERSION = 2;              // bump when the saved shape changes, so old state is rebuilt instead of misread
 
+// Robinhood's public RPC allows about 30 requests a minute from one address, then answers HTTP 403 (a Cloudflare
+// challenge) for a minute or more. Requests to a host listed here are spaced at least this far apart.
+const PACE = { 'rpc.mainnet.chain.robinhood.com': 2500 };
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const hexNum = (h) => parseInt(h, 16);
 const words = (data) => data.slice(2).match(/.{64}/g) || [];
@@ -118,15 +122,22 @@ function rpcClient(urls) {
   let batchMax = 40; // shrinks when an endpoint says it accepts fewer calls per batch
   const url = () => urls[current % urls.length];
   const rotate = () => { current++; };
+  const nextSlot = {}; // per paced host: when its next request may go out
 
   async function send(body) {
     const target = url();
+    const host = new URL(target).host;
+    if (PACE[host]) {
+      const at = Math.max(Date.now(), nextSlot[host] || 0);
+      nextSlot[host] = at + PACE[host];
+      await sleep(at - Date.now());
+    }
     const r = await fetch(target, {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'user-agent': UA },
       body: JSON.stringify(body),
     });
-    if (r.status === 401 || r.status === 403 || r.status === 429 || r.status >= 500) throw new Error(`${new URL(target).host} answered HTTP ${r.status}`);
+    if (r.status === 401 || r.status === 403 || r.status === 429 || r.status >= 500) throw new Error(`${host} answered HTTP ${r.status}`);
     return r.json();
   }
 
@@ -144,8 +155,9 @@ function rpcClient(urls) {
         lastError = e;
       }
       rotate();
-      // A 429 means slow down, so back off exponentially; other failures retry sooner.
-      await sleep(/HTTP 429|rate limit|too many requests/i.test(lastError.message) ? 2000 * 2 ** Math.min(attempt, 4) : 500 * (attempt + 1));
+      // A 429 means slow down, and a 403 is usually the same thing said by a firewall, so back off exponentially
+      // (about a minute and a half in all, enough to outlast a block); other failures retry sooner.
+      await sleep(/HTTP 4(03|29)|rate limit|too many requests/i.test(lastError.message) ? 2000 * 2 ** Math.min(attempt, 4) : 500 * (attempt + 1));
     }
     throw lastError;
   }
@@ -272,6 +284,8 @@ async function scan(c, state) {
     ]);
     for (const lg of v4) touch(lg.topics[1].toLowerCase(), 'v4', hexNum(lg.blockNumber));
     for (const lg of legacy) touch(lg.address.toLowerCase(), lg.topics[0] === TOPIC.v3Swap ? 'v3' : 'v2', hexNum(lg.blockNumber));
+    // Progress is kept chunk by chunk, so a pass that fails part-way resumes here instead of starting over.
+    if (b >= from) state.lastBlock = b;
   }
   state.lastBlock = head;
   state.v4Backfilled = true;
@@ -463,6 +477,9 @@ for (;;) {
       await cycle(c);
     } catch (e) {
       console.log(`[${new Date().toLocaleTimeString('en-US')}] ${c.name}: cycle failed: ${e.message}`);
+      // Keep what the pass did get through. With --once the next pass is a new process, and it should continue
+      // from the blocks already scanned rather than repeat the same catch-up.
+      await writeJson(stateFile(c.key), c.state).catch(() => {});
     }
   }
   if (once) break;
